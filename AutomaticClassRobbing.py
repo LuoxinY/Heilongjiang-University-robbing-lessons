@@ -11,8 +11,9 @@ class AutomaticClassRobbing:
     __doc__ = "黑龙江大学选课自动抢课（模拟人工点击）"
 
     def __init__(self):
-        self.StudentID="20154471"
-        self.Password="900514"
+
+        self.getStudengtInfo()#获取用户的登录信息
+        self.getClassList()#获取用户需要抢的课
 
         self.URL_Index="http://xsxk.hlju.edu.cn/xsxk/"#选课网站首页
         self.URL_ClassIndex="http://xsxk.hlju.edu.cn/xsxk/xkjs.xk"#选课的课程页面
@@ -20,15 +21,69 @@ class AutomaticClassRobbing:
         self.executable_path = "C:/chromedriver.exe"#浏览器驱动
         self.driver_name ='chrome'#浏览器名称
 
+        print("初始化成功")
+
+    def getClassList(self):
+
+        __doc__="正在获取用户需要的课......"
+
+        def delString(mes):  #
+
+            __doc__ = "格式化字符串"
+
+            if mes[-1] == '\n':
+                return mes[:-1]
+            else:
+                return mes
+
+        def addID(mes):
+            if mes not in self.ClassIDs:
+                self.ClassIDs.add(mes)
+
+        print(__doc__)
+        self.ClassIDs = set()
+        file = open("ClassIDList.acr", "r")
+        for i in file.readlines():
+            addID(delString(i))
+        file.close()
+
+    def getStudengtInfo(self):
+
+        __doc__="正在获取用户信息......"
+
+        def delString(mes):#
+
+            __doc__="格式化字符串"
+
+            if mes[-1] == '\n':
+                return mes[:-1]
+            else:
+                return mes
+
+        print(__doc__)
+        file = open("setting.ini", "r")#读取用户数据
+        message = file.readline()
+        if message[:9] == "StudentID":
+            StudentID = message[10:]
+            message = file.readline()
+            Password = message[9:]
+        else:
+            Password = message[9:]
+            message = file.readline()
+            StudentID = message[10:-1]
+        self.StudentID=delString(StudentID)#学号
+        self.Password=delString(Password)#密码
+        file.close()
 
     def login(self):
-        print("登录")
+
+        __doc__="正在准备登陆......"
+        print(__doc__)
         self.driver.get(self.URL_Index)
         self.driver.find_element_by_id("xkgl").click()
         self.driver.find_element_by_id("username").send_keys(self.StudentID)
         self.driver.find_element_by_id("password").send_keys(self.Password)
-
-
+        print("等待用户输入验证码")
         while True:
             if self.driver.current_url != self.URL_Index:
                 break
@@ -47,10 +102,11 @@ class AutomaticClassRobbing:
         # sharp_img = sharpness.enhance(2.0)
         # sharp_img.save("./image_code.jpg")
 
-
     def start(self):
-        print("进入选课页面")
-        # self.driver.get(self.URL_ClassIndex)
+
+        __doc__="正在进入选课页面......"
+        print(__doc__)
+
         self.driver.find_element_by_class_name("current").click()#选课中心
         js="comeToXkzx(this);"
         self.driver.execute_script(js)
@@ -58,62 +114,52 @@ class AutomaticClassRobbing:
 
         self.driver.switch_to_frame("main")
         self.driver.execute_script("comeInQxgxk(this);")#全校公共选课
-        # self.driver.find_element_by_id("qxgxkLink").click()
 
         self.driver.switch_to_frame("qxgxkFrame")
-        self.driver.find_element_by_id("qKcxx").clear()
-        self.driver.find_element_by_id("qKcxx").send_keys(self.ClassID[:11])
-        # sleep(5)
-        # count=0
-        # while True:
-        #     try:
-        #         self.driver.find_element_by_id("qKcxx").clear()
-        #         self.driver.find_element_by_id("qKcxx").send_keys(self.ClassID)
-        #         self.driver.find_element_by_id("qGlct").click()#过滤冲突
-        #         self.driver.find_element_by_id("qGlym").click()#过滤已满
-        #         break
-        #     except:
-        #         count+=1
-        #         sleep(1)
-        #         print("Try again")
-        #         if count==10:
-        #             break
-        # # self.driver.find_element_by_text("查询").click()
-        js="queryXkJxb();"
-        self.driver.execute_script(js)
 
-        js="xkOper('2018-2019-"+self.ClassID+"')"
-        print(js)
-        while True:
-            self.driver.execute_script(js)
+        count=0
+        for ClassID in self.ClassIDs:
+            count+=1
+            print("正在选择第{}门课程".format(count))
+            self.driver.find_element_by_id("qKcxx").clear()
+            self.driver.find_element_by_id("qKcxx").send_keys(ClassID[1:8])
+            js="queryXkJxb();"
+            self.driver.execute_script(js)#查询课程
 
-            alert =self.driver.switch_to_alert()
-            print(alert.text)
-            # sleep(2)
-            # alert.dismiss()#取消
-            alert.accept()
-            try:
-                sleep(2)
-                alert = self.driver.switch_to_alert()
+            js="xkOper('2018-2019-"+ClassID+"')"#选课的js请求
+            print(js)
+            count_try=0
+            while True:
+                count_try+=1
+                print("正在进行第{}门课的第{}次尝试".format(count,count_try))
+                self.driver.execute_script(js)
+
+                alert =self.driver.switch_to_alert()
                 print(alert.text)
-
-                if alert.text=="选课成功！":
-                    break
+                sleep(2)
+                # alert.dismiss()#取消
                 alert.accept()
-                sleep(1)
-            except:
-                sleep(5)
-                pass
+                try:
+                    sleep(1)
+                    alert = self.driver.switch_to_alert()
+                    print(alert.text)
+                    if alert.text=="选课成功！":
+                        break
+                    alert.accept()
+                    sleep(1)
+                except:
+                    sleep(5)
+                    pass
 
-
-
-    def main(self,ClassID):
+    def main(self):
+        print("准备开始选课......")
+        print("正在打开浏览器......")
         self.driver = webdriver.Chrome()  # 打开浏览器
         self.driver.set_window_size(1200, 800)
+        print("正在进入选课网站")
         self.login()
-        self.ClassID=ClassID
         self.start()
 
 if __name__ == '__main__':
     a=AutomaticClassRobbing()
-    a.main("1151200201201")
+    a.main()
