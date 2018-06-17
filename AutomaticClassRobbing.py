@@ -1,3 +1,4 @@
+import sqlite3
 from time import sleep
 
 from PIL import Image, ImageEnhance
@@ -5,13 +6,29 @@ from splinter.browser import Browser  #引入splinter的borwser对象
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 
+def executeSQL(*args):
+    conn = sqlite3.connect("Info.acr")
+    cursor = conn.cursor()
+    if args.__len__()==2:
+        re = cursor.execute(args[0], args[1])
+        re=re.fetchall()
+    elif args.__len__()==1:
+        re=cursor.execute(args[0])
+        re=re.fetchall()
+    else:
+        re=False
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return re
 
 class AutomaticClassRobbing:
 
-    __doc__ = "黑龙江大学选课自动抢课（模拟人工点击）"
+    __doc__ = "正在启动黑龙江大学选课自动抢课系统（模拟人工点击）......"
 
     def __init__(self):
-
+        print(self.__doc__)
         self.getStudengtInfo()#获取用户的登录信息
         self.getClassList()#获取用户需要抢的课
 
@@ -23,57 +40,81 @@ class AutomaticClassRobbing:
 
         print("初始化成功")
 
+    def getStudengtInfo(self):  # 获取信息
+        sql = "select valuse from setting where name='studentID'"
+        self.StudentID = self.crypt(executeSQL(sql)[0][0])
+
+        sql = 'select valuse from setting where name="password"'
+        self.Password = self.crypt(executeSQL(sql)[0][0])
+
+    def crypt(self, source):  # 加密解密
+        self.key = "AutomaticClassRobbing"
+        from itertools import cycle
+        result = ''
+        temp = cycle(self.key)
+        for ch in source:
+            result = result + chr(ord(ch) ^ ord(next(temp)))
+        return result
+
     def getClassList(self):
+        self.ClassIDs = []
 
-        __doc__="正在获取用户需要的课......"
+        sql = "select * from ClassList"
+        re = executeSQL(sql)
+        for i in re:
+            self.ClassIDs.append(i[0])
 
-        def delString(mes):  #
+    # def getClassList(self):
+    #
+    #     __doc__="正在获取用户需要的课......"
+    #
+    #     def delString(mes):  #
+    #
+    #         __doc__ = "格式化字符串"
+    #
+    #         if mes[-1] == '\n':
+    #             return mes[:-1]
+    #         else:
+    #             return mes
+    #
+    #     def addID(mes):
+    #         if mes not in self.ClassIDs:
+    #             self.ClassIDs.add(mes)
 
-            __doc__ = "格式化字符串"
+        # print(__doc__)
+        # self.ClassIDs = set()
+        # file = open("ClassIDList.acr", "r")
+        # for i in file.readlines():
+        #     addID(delString(i))
+        # file.close()
 
-            if mes[-1] == '\n':
-                return mes[:-1]
-            else:
-                return mes
+    # def getStudengtInfo(self):
+    #
+    #     __doc__="正在获取用户信息......"
+    #
+    #     def delString(mes):#
+    #
+    #         __doc__="格式化字符串"
+    #
+    #         if mes[-1] == '\n':
+    #             return mes[:-1]
+    #         else:
+    #             return mes
 
-        def addID(mes):
-            if mes not in self.ClassIDs:
-                self.ClassIDs.add(mes)
-
-        print(__doc__)
-        self.ClassIDs = set()
-        file = open("ClassIDList.acr", "r")
-        for i in file.readlines():
-            addID(delString(i))
-        file.close()
-
-    def getStudengtInfo(self):
-
-        __doc__="正在获取用户信息......"
-
-        def delString(mes):#
-
-            __doc__="格式化字符串"
-
-            if mes[-1] == '\n':
-                return mes[:-1]
-            else:
-                return mes
-
-        print(__doc__)
-        file = open("setting.ini", "r")#读取用户数据
-        message = file.readline()
-        if message[:9] == "StudentID":
-            StudentID = message[10:]
-            message = file.readline()
-            Password = message[9:]
-        else:
-            Password = message[9:]
-            message = file.readline()
-            StudentID = message[10:-1]
-        self.StudentID=delString(StudentID)#学号
-        self.Password=delString(Password)#密码
-        file.close()
+        # print(__doc__)
+        # file = open("setting.ini", "r")#读取用户数据
+        # message = file.readline()
+        # if message[:9] == "StudentID":
+        #     StudentID = message[10:]
+        #     message = file.readline()
+        #     Password = message[9:]
+        # else:
+        #     Password = message[9:]
+        #     message = file.readline()
+        #     StudentID = message[10:-1]
+        # self.StudentID=delString(StudentID)#学号
+        # self.Password=delString(Password)#密码
+        # file.close()
 
     def login(self):
 
@@ -83,7 +124,7 @@ class AutomaticClassRobbing:
         self.driver.find_element_by_id("xkgl").click()
         self.driver.find_element_by_id("username").send_keys(self.StudentID)
         self.driver.find_element_by_id("password").send_keys(self.Password)
-        print("等待用户输入验证码")
+        print("等待用户输入验证码......")
         while True:
             if self.driver.current_url != self.URL_Index:
                 break
@@ -120,23 +161,23 @@ class AutomaticClassRobbing:
         count=0
         for ClassID in self.ClassIDs:
             count+=1
-            print("正在选择第{}门课程".format(count))
+            print("正在选择第{}门课程......".format(count))
             self.driver.find_element_by_id("qKcxx").clear()
             self.driver.find_element_by_id("qKcxx").send_keys(ClassID[1:8])
             js="queryXkJxb();"
             self.driver.execute_script(js)#查询课程
 
             js="xkOper('2018-2019-"+ClassID+"')"#选课的js请求
-            print(js)
+            # print(js)
             count_try=0
             while True:
                 count_try+=1
-                print("正在进行第{}门课的第{}次尝试".format(count,count_try))
+                print("正在进行第{}门课的第{}次尝试......".format(count,count_try))
                 self.driver.execute_script(js)
 
                 alert =self.driver.switch_to_alert()
                 print(alert.text)
-                sleep(2)
+                # sleep(2)
                 # alert.dismiss()#取消
                 alert.accept()
                 try:
@@ -156,10 +197,11 @@ class AutomaticClassRobbing:
         print("正在打开浏览器......")
         self.driver = webdriver.Chrome()  # 打开浏览器
         self.driver.set_window_size(1200, 800)
-        print("正在进入选课网站")
+        print("正在进入选课网站......")
         self.login()
         self.start()
 
 if __name__ == '__main__':
+    print("正在启动，请稍后......")
     a=AutomaticClassRobbing()
     a.main()
