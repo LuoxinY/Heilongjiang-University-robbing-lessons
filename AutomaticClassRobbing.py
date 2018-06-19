@@ -1,4 +1,4 @@
-import sqlite3
+﻿import sqlite3
 from time import sleep
 
 from PIL import Image, ImageEnhance
@@ -62,7 +62,7 @@ class AutomaticClassRobbing:
         sql = "select * from ClassList"
         re = executeSQL(sql)
         for i in re:
-            self.ClassIDs.append(i[0])
+            self.ClassIDs.append(str(i[0]))
 
     # def getClassList(self):
     #
@@ -181,7 +181,7 @@ class AutomaticClassRobbing:
                 # alert.dismiss()#取消
                 alert.accept()
                 try:
-                    sleep(1)
+                    #sleep(1)
                     alert = self.driver.switch_to_alert()
                     print(alert.text)
                     if alert.text=="选课成功！":
@@ -189,7 +189,7 @@ class AutomaticClassRobbing:
                     alert.accept()
                     sleep(1)
                 except:
-                    sleep(5)
+                    #sleep(5)
                     pass
 
     def main(self):
