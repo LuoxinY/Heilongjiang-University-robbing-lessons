@@ -172,6 +172,10 @@ class AutomaticClassRobbing:
             count_try=0
             while True:
                 count_try+=1
+
+                if count_try%10==0:
+                    self.driver.execute_script("queryXkJxb();")#点击查询，防止被选课系统检测到
+
                 print("正在进行第{}门课的第{}次尝试......".format(count,count_try))
                 self.driver.execute_script(js)
 
