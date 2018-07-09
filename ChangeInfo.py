@@ -40,7 +40,7 @@ class classinfo():
         self.root=Tk()
         self.root.title="课程ID号管理"
 
-        self.e1 = Text(self.root,width=20,height=30)
+        self.e1 = Text(self.root,width=25,height=30)
         self.e1.insert(INSERT,self.StartStr)
         # self.e1.insert(END)
         self.e1.grid(row=0, column=0, sticky=N)
@@ -58,7 +58,7 @@ class classinfo():
         # s1.remove("")
         for i in s1:
             print(i.__len__())
-            if i.__len__()!=13:
+            if i.__len__()<13:
                 s1.remove(i)
         print(s1)
         executeSQL("delete from ClassList")

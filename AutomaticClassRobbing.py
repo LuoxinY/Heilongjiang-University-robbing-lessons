@@ -56,7 +56,7 @@ class AutomaticClassRobbing:
             result = result + chr(ord(ch) ^ ord(next(temp)))
         return result
 
-    def getClassList(self):
+    def getClassList(self):#获取课程列表
         self.ClassIDs = []
 
         sql = "select * from ClassList"
@@ -116,7 +116,7 @@ class AutomaticClassRobbing:
         # self.Password=delString(Password)#密码
         # file.close()
 
-    def login(self):
+    def login(self):#登录
 
         __doc__="正在准备登陆......"
         print(__doc__)
@@ -143,7 +143,7 @@ class AutomaticClassRobbing:
         # sharp_img = sharpness.enhance(2.0)
         # sharp_img.save("./image_code.jpg")
 
-    def start(self):
+    def start(self):#开始选课
 
         __doc__="正在进入选课页面......"
         print(__doc__)
@@ -159,16 +159,16 @@ class AutomaticClassRobbing:
         self.driver.switch_to_frame("qxgxkFrame")
 
         count=0
-        for ClassID in self.ClassIDs:
+        for ClassID in self.ClassIDs:#选课
             count+=1
             print("正在选择第{}门课程......".format(count))
             self.driver.find_element_by_id("qKcxx").clear()
-            self.driver.find_element_by_id("qKcxx").send_keys(ClassID[1:8])
+            self.driver.find_element_by_id("qKcxx").send_keys(ClassID[-12:-2])
             js="queryXkJxb();"
             self.driver.execute_script(js)#查询课程
 
-            js="xkOper('2018-2019-"+ClassID+"')"#选课的js请求
-            # print(js)
+            js="xkOper('"+ClassID+"')"#选课的js请求
+            print(js)
             count_try=0
             while True:
                 count_try+=1
@@ -199,7 +199,7 @@ class AutomaticClassRobbing:
         self.driver.set_window_size(1200, 800)
         print("正在进入选课网站......")
         self.login()
-        self.start()
+        # self.start()
 
 if __name__ == '__main__':
     print("正在启动，请稍后......")
